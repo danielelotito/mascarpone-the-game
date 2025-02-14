@@ -19,9 +19,7 @@ This implementation allows you to:
 ```
 mascarpone/
 ├── config/
-│   ├── agent_setup_default.yaml   # Default agent configuration
-│   ├── agent_naive.yaml           # Naive agent strategy settings
-│   ├── game_default.yaml          # Default game parameters
+│   ├── otherfoldersforconfig      # Default game parameters etc...
 │   └── config.yaml                # Main configuration file
 ├── src/
 │   ├── agents.py                  # AI agent implementations
