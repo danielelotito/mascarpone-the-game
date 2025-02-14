@@ -1,0 +1,4 @@
+enabled: true
+folders:
+  data: ${hydra:runtime.output_dir}/data
+  static_vis: ${hydra:runtime.output_dir}/figures

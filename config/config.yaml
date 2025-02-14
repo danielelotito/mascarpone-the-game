@@ -1,0 +1,18 @@
+defaults:
+  - game:  game_default 
+  - save: save_default
+  - agent_setup: agent_setup_default
+  - agent:
+    - agent_naive
+    # - agent_default
+
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M}
+  sweep:
+    dir: ./multirun/${now:%Y-%m-%d}/${now:%H-%M}
+    subdir: ${hydra.job.override_dirname}
+
+
+# Logging configuration
+log_level: INFO

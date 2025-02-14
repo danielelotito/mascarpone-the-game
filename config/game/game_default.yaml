@@ -1,0 +1,12 @@
+name: 'default'
+N_cards: 52  # Number of cards in deck
+N_players: 4  # Number of players
+Initial_hand: 5  # Number of cards in the initial hand
+min_players: 2
+max_players: 10
+min_cards_per_hand: 2
+max_cards_per_hand: 13
+card_min_value: 1  # Ace
+card_max_value: 13  # King
+suits: ['♥', '♦', '♣', '♠']
+descending_phase_rounds: 4  # Number of rounds in descending phase
