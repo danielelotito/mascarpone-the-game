@@ -2,6 +2,44 @@
 
 Finally Mascarpone is here!
 
+# Mascarpone Game Implementation
+
+A Python implementation of the Mascarpone card game, featuring agents (pretty dumb for the moment). This project uses Hydra for configuration management and provides detailed logging of game progression.
+
+## Project Overview
+
+This implementation allows you to:
+
+- Run simulations of the Mascarpone card game with configurable  agents
+- Track detailed game progression through comprehensive logging
+- Customize game parameters through Hydra configuration
+
+## Project Structure
+
+```
+mascarpone/
+├── config/
+│   ├── agent_setup_default.yaml   # Default agent configuration
+│   ├── agent_naive.yaml           # Naive agent strategy settings
+│   ├── game_default.yaml          # Default game parameters
+│   └── config.yaml                # Main configuration file
+├── src/
+│   ├── agents.py                  # AI agent implementations
+│   ├── models.py                  # Card and game state models
+│   ├── mascarpone.py             # Core game logic
+│   └── main.py                   # Entry point
+└── README.md                     # This file
+```
+
+## Related Work
+
+For a deep dive into optimal strategies in a simplified version of Mascarpone (2 players, 2 cards), check out the companion repository [Mascarpone Strategy Analysis](https://github.com/danielelotito/mascarpone). This analysis:
+
+- Evaluates optimal strategies for declaring 0, 1, or 2 tricks
+- Provides probability calculations for different card combinations
+- Includes visualization tools for strategy analysis
+- Identifies winning positions and optimal play patterns
+
 # Mascarpone Card Game Rules
 
 ## 🎴 Overview
