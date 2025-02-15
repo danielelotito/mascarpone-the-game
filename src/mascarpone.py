@@ -114,22 +114,22 @@ class Mascarpone:
         total_declared = 0
         
         for i, player_idx in enumerate(self.active_players):
-            if i == len(self.active_players) - 1:  # Last player
-                # Last player's declaration is constrained
-                remaining = self.cards_per_round - total_declared
-                declarations.append(remaining)
-                log.info(f"Agent {player_idx} must declare: {remaining}")
-            else:
-                # Random declaration for other players
-                max_declare = min(self.cards_per_round, 
-                                self.cards_per_round - total_declared)
-                declaration = np.random.randint(0, max_declare + 1)
-                declarations.append(declaration)
-                total_declared += declaration
-                log.info(f"Agent {player_idx} declares: {declaration}")
-                
+            # Get declaration from agent
+            is_last = i == len(self.active_players) - 1
+            declaration = self.agents[player_idx].declare_tricks(
+                total_declared, 
+                self.cards_per_round,
+                is_last
+            )
+            
+            declarations.append(declaration)
+            total_declared += declaration
+            
+            # Log the declaration along with current hand
+            hand_str = [str(card) for card in self.agents[player_idx].cards]
+            log.info(f"Agent {player_idx} {hand_str}: declares {declaration}")
+        
         return declarations
-
     def _deal_cards(self):
         """Deal cards to players for the current round."""
         self.deck = self._create_deck()  # Reshuffle deck

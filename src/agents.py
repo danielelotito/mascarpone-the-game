@@ -7,10 +7,10 @@ log = logging.getLogger(__name__)
 
 class AgentNaive:
     """
-    This agent sees the cards on the pile and plays the higher card in their hand that is still
-    lower than the highest card in the pile. If they have no card that fits this criteria,
-    they play the highest card in their hand.
-    If the agent is first to play, they play the lowest card in their hand.
+    This agent declares a number of tricks equal to the number of hearts in their hand.
+    When playing, it tries to play the highest card lower than the highest card in the pile.
+    If no such card exists, it plays its highest card.
+    If first to play, it plays its lowest card.
     """
     
     def __init__(self, cards: list, cfg):
@@ -19,6 +19,42 @@ class AgentNaive:
         self.cards = cards
         self.tricks = 0
         self.trick_history = []
+    
+    def declare_tricks(self, total_declared: int, cards_per_round: int, is_last: bool) -> int:
+        """
+        Declare expected number of tricks based on hearts in hand.
+        
+        Args:
+            total_declared: Sum of declarations made by previous players
+            cards_per_round: Number of cards per player this round
+            is_last: Whether this player is the last to declare
+            
+        Returns:
+            int: Number of tricks declared
+        """
+        # Count hearts in hand
+        hearts_count = sum(1 for card in self.cards if card.suit == '♥')
+        
+        if is_last:
+            # Last player must ensure total declarations != cards_per_round
+            remaining = cards_per_round - total_declared
+            if remaining <= 0:  # Safety check
+                return 0
+                
+            # Always pick a number different from remaining
+            if hearts_count >= remaining:
+                # If we have enough hearts, declare one less than remaining
+                return remaining - 1
+            else:
+                # If we have fewer hearts than remaining, declare them all
+                # unless that would make total = cards_per_round
+                if hearts_count == remaining:
+                    return hearts_count - 1
+                return hearts_count
+        else:
+            # Other players declare based on hearts, bounded by available tricks
+            max_declare = min(cards_per_round, cards_per_round - total_declared)
+            return min(hearts_count, max_declare)
     
     def play(self, card_pile: List[Tuple[int, 'Card']]) -> 'Card':
         """Play a card based on the current pile state."""
