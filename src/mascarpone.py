@@ -1,9 +1,11 @@
-import numpy as np
 import logging
 import sys
-from typing import List, Dict, Tuple
-from models import Card
+from typing import List, Tuple
+
+import numpy as np
+
 from agents import AgentNaive
+from models import Card
 
 # Configure logging to handle Unicode and write to both console and file
 logging.basicConfig(
@@ -17,28 +19,38 @@ logging.basicConfig(
 
 log = logging.getLogger(__name__)
 
+
+def trick_winner(pile: List[Tuple[int, Card]]) -> int:
+    """Determine the winner of a trick."""
+    highest_card_idx = 0
+    for i in range(1, len(pile)):
+        if pile[i][1] > pile[highest_card_idx][1]:
+            highest_card_idx = i
+    return highest_card_idx
+
+
 class Mascarpone:
     def __init__(self, cfg):
         self.cfg = cfg
         self.n_players = cfg.game.N_players
         self.n_cards = cfg.game.N_cards
         self.initial_hand = cfg.game.Initial_hand
-        
+
         # Game state
         self.current_round = 1
         self.cards_per_round = self.initial_hand
         self.active_players = list(range(self.n_players))
-        
+
         # Calculate descending phase rounds
         self.descending_rounds = cfg.get('descending_rounds', self.initial_hand - 2)
-        
+
         # Validate configuration
         self._validate_config()
-        
+
         # Initialize deck and agents
         self.deck = self._create_deck()
         self.agents = self._initialize_agents()
-        
+
         # Setup logging
         self._setup_logging()
 
@@ -64,8 +76,8 @@ class Mascarpone:
         """Create and shuffle a new deck of cards."""
         deck = []
         for suit in self.cfg.game.suits:
-            for value in range(self.cfg.game.card_min_value, 
-                             self.cfg.game.card_max_value + 1):
+            for value in range(self.cfg.game.card_min_value,
+                               self.cfg.game.card_max_value + 1):
                 deck.append(Card(suit, value))
         np.random.shuffle(deck)
         return deck
@@ -112,24 +124,25 @@ class Mascarpone:
         """Collect trick declarations from all active players."""
         declarations = []
         total_declared = 0
-        
+
         for i, player_idx in enumerate(self.active_players):
             # Get declaration from agent
             is_last = i == len(self.active_players) - 1
             declaration = self.agents[player_idx].declare_tricks(
-                total_declared, 
+                total_declared,
                 self.cards_per_round,
                 is_last
             )
-            
+
             declarations.append(declaration)
             total_declared += declaration
-            
+
             # Log the declaration along with current hand
             hand_str = [str(card) for card in self.agents[player_idx].cards]
             log.info(f"Agent {player_idx} {hand_str}: declares {declaration}")
-        
+
         return declarations
+
     def _deal_cards(self):
         """Deal cards to players for the current round."""
         self.deck = self._create_deck()  # Reshuffle deck
@@ -139,46 +152,38 @@ class Mascarpone:
             self.agents[player_idx].cards = self.deck[start_idx:end_idx]
             log.info(f"Agent {player_idx} hand: {[str(card) for card in self.agents[player_idx].cards]}")
 
-    def trick_winner(self, pile: List[Tuple[int, Card]]) -> int:
-        """Determine the winner of a trick."""
-        highest_card_idx = 0
-        for i in range(1, len(pile)):
-            if pile[i][1] > pile[highest_card_idx][1]:
-                highest_card_idx = i
-        return highest_card_idx
-
     def _play_round(self):
         """Play a complete round of the game."""
         log.info(f"\n=== Round {self.current_round} ===")
         log.info(f"Cards per hand: {self.cards_per_round}")
-        
+
         # Deal cards
         self._deal_cards()
-        
+
         # Collect declarations
         log.info("\n--- Trick Declaration Phase ---")
         declarations = self._collect_declarations()
-        
+
         # Play tricks
         for trick_num in range(self.cards_per_round):
             log.info(f"\n--- Trick {trick_num + 1}/{self.cards_per_round} ---")
             pile = []
-            
+
             # Each player plays a card
             for player_idx in self.active_players:
                 card = self.agents[player_idx].play(pile)
                 pile.append((player_idx, card))
                 log.info(f"Agent {player_idx} plays: {str(card)}")
-            
+
             # Determine winner
-            winner_idx = self.trick_winner(pile)
+            winner_idx = trick_winner(pile)
             winner_player = pile[winner_idx][0]
             self.agents[winner_player].tricks += 1
-            
+
             log.info(f"Pile: {[(p, str(c)) for p, c in pile]}")
             log.info(f"Winning card: {str(pile[winner_idx][1])}")
             log.info(f"Winner: Agent {winner_player}")
-        
+
         # Check eliminations
         log.info("\n--- Round Results ---")
         self._check_eliminations(declarations)
@@ -187,22 +192,22 @@ class Mascarpone:
         """Check which players are eliminated this round."""
         log.info("Comparing tricks won vs declared:")
         eliminated = []
-        
+
         for i, player_idx in enumerate(self.active_players):
             agent = self.agents[player_idx]
             log.info(f"Agent {player_idx}: [{agent.tricks} vs {declarations[i]}]")
-            
+
             if agent.tricks != declarations[i]:
                 eliminated.append(player_idx)
                 log.info(f"Agent {player_idx} does MASCARPONE!")
-            
+
             # Reset tricks for next round
             agent.tricks = 0
-        
+
         # Remove eliminated players
         for player_idx in eliminated:
             self.active_players.remove(player_idx)
-        
+
         log.info(f"Remaining Players: {self.active_players}")
 
     def play_game(self):
@@ -217,11 +222,11 @@ class Mascarpone:
                 )
                 self.cards_per_round -= 1
                 continue
-            
+
             self._play_round()
             self._update_cards_per_round()
             self.current_round += 1
-        
+
         if self.active_players:
             log.info(f"\n Winner: Agent {self.active_players[0]}")
         else:

@@ -1,5 +1,5 @@
 defaults:
-  - game:  game_default 
+  - game: game_default
   - save: save_default
   - agent_setup: agent_setup_default
   - agent:
