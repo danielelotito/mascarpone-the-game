@@ -31,6 +31,14 @@ mascarpone/
 
 
 
+# Project Setup
+For executing the project, run the following commands:  
+``python -m venv .venv ``  
+``source .venv/bin/activate ``  
+``pip install -r requirements.txt``  
+``python src/main.py``  
+
+
 # Mascarpone Card Game Rules
 
 ## 🎴 Overview
