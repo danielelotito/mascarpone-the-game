@@ -29,14 +29,7 @@ mascarpone/
 └── README.md                     # This file
 ```
 
-## Related Work
 
-For a deep dive into optimal strategies in a simplified version of Mascarpone (2 players, 2 cards), check out the companion repository [Mascarpone Strategy Analysis](https://github.com/danielelotito/mascarpone). This analysis:
-
-- Evaluates optimal strategies for declaring 0, 1, or 2 tricks
-- Provides probability calculations for different card combinations
-- Includes visualization tools for strategy analysis
-- Identifies winning positions and optimal play patterns
 
 # Mascarpone Card Game Rules
 
@@ -87,3 +80,14 @@ Note: Fewer rounds may be played depending on the number of players and game pro
 ## 🏆 Victory
 
 The last remaining player wins the game!
+
+
+## Related Work
+
+For a deep dive into optimal strategies of a particular scenario that may happen in Mascarpone (2 players, 2 cards), check out the companion repository [Mascarpone Strategy Analysis](https://github.com/danielelotito/mascarpone). This analysis:
+
+- Evaluates optimal strategies for declaring 0, 1, or 2 tricks
+- Provides probability calculations for different card combinations
+- Includes visualization tools for strategy analysis
+- Identifies winning positions and optimal play patterns
+
