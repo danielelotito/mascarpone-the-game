@@ -4,6 +4,9 @@ outputs/
 *.py[cod]
 *$py.class
 
+# IntelliJ IDE folder
+.idea
+
 # C extensions
 *.so
 
