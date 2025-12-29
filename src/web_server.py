@@ -226,7 +226,12 @@ def run_server(host='0.0.0.0', port=5000, debug=False):
     print(f"\n🎮 Mascarpone Web Server starting...")
     print(f"📱 Open http://localhost:{port} to play!")
     print(f"🔗 Share this link with friends to play together\n")
-    socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=True)
+    if debug:
+        # Development mode: allow Werkzeug's development server
+        socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=True)
+    else:
+        # Production mode: use proper WSGI server
+        socketio.run(app, host=host, port=port, debug=debug)
 
 
 if __name__ == '__main__':

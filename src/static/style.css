@@ -310,11 +310,6 @@ h1 {
     box-shadow: 0 5px 15px rgba(233, 69, 96, 0.3);
 }
 
-/* Red suits */
-.card-btn:has(♥), .card-btn:has(♦) {
-    color: #c0392b;
-}
-
 .eliminated-msg {
     color: #e74c3c;
     font-style: italic;
