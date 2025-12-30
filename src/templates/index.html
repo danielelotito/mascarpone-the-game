@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mascarpone - The Card Game</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎴 Mascarpone</h1>
+        <p class="subtitle">The Card Game</p>
+        
+        <div class="menu">
+            <div class="input-group">
+                <label for="playerName">Your Name:</label>
+                <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+            </div>
+            
+            <button id="createBtn" class="btn btn-primary">Create New Game</button>
+            
+            <div class="divider">or</div>
+            
+            <div class="input-group">
+                <label for="roomCode">Room Code:</label>
+                <input type="text" id="roomCode" placeholder="Enter room code" maxlength="8">
+            </div>
+            <button id="joinBtn" class="btn btn-secondary">Join Game</button>
+        </div>
+        
+        <div class="rules-summary">
+            <h3>Quick Rules</h3>
+            <ul>
+                <li>Predict how many tricks you'll win each round</li>
+                <li>Win exactly as many as you predicted - no more, no less!</li>
+                <li>Miss your prediction? You're out (Mascarpone!)</li>
+                <li>Last player standing wins!</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="/static/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+        
+        socket.on('room_created', (data) => {
+            const playerName = document.getElementById('playerName').value.trim() || 'Player';
+            window.location.href = `/game/${data.room_id}?name=${encodeURIComponent(playerName)}`;
+        });
+        
+        socket.on('error', (data) => {
+            alert(data.message);
+        });
+        
+        document.getElementById('createBtn').addEventListener('click', () => {
+            socket.emit('create_room', {});
+        });
+        
+        document.getElementById('joinBtn').addEventListener('click', () => {
+            const roomCode = document.getElementById('roomCode').value.trim();
+            const playerName = document.getElementById('playerName').value.trim() || 'Player';
+            if (roomCode) {
+                window.location.href = `/game/${roomCode}?name=${encodeURIComponent(playerName)}`;
+            } else {
+                alert('Please enter a room code');
+            }
+        });
+        
+        // Allow Enter key to submit
+        document.getElementById('roomCode').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('joinBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>

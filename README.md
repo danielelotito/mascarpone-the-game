@@ -6,10 +6,70 @@ Finally Mascarpone is here!
 
 A Python implementation of the Mascarpone card game, featuring agents (pretty dumb for the moment). This project uses Hydra for configuration management and provides detailed logging of game progression.
 
+## 🌐 Play Online with Friends
+
+Play Mascarpone with your friends online! Start a game server and share the link.
+
+### Quick Start
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the web server
+cd src
+python web_server.py --port 5000
+```
+
+Then open `http://localhost:5000` in your browser.
+
+### How to Play
+
+#### Creating a Game
+1. Enter your name
+2. Click "Create New Game"
+3. You'll be taken to a game lobby with a unique room code
+4. Click "Copy Link" to share the room link with your friends
+5. Once everyone has joined (minimum 2 players), click "Start Game"
+
+#### Joining a Game
+1. Enter your name
+2. Enter the room code shared by your friend (or use the direct link they shared)
+3. Click "Join Game"
+4. Wait in the lobby until the host starts the game
+
+#### Gameplay
+1. **Declaration Phase**: Each player declares how many tricks they expect to win
+   - The last player to declare cannot make the total equal to the number of cards
+2. **Playing Phase**: Players take turns playing cards
+   - Click on a card in your hand to play it
+   - The highest card wins the trick
+   - The trick winner leads the next trick
+3. **Round End**: Players who didn't match their declaration are eliminated (Mascarpone!)
+4. **Victory**: Last player standing wins!
+
+### Command Line Options
+
+```bash
+python web_server.py --host 0.0.0.0 --port 5000 --debug
+```
+
+- `--host`: Host to bind to (default: 0.0.0.0)
+- `--port`: Port number (default: 5000)
+- `--debug`: Enable debug mode
+
+### Deployment Tips
+
+For playing with friends over the internet:
+- Deploy on a cloud server (e.g., Heroku, Railway, DigitalOcean)
+- Or use a tunneling service like ngrok: `ngrok http 5000`
+- Share the public URL with your friends
+
 ## Project Overview
 
 This implementation allows you to:
 
+- **Play online with friends** via a web interface (no fancy graphics, just functional!)
 - Run simulations of the Mascarpone card game with configurable  agents
 - Track detailed game progression through comprehensive logging
 - Customize game parameters through Hydra configuration
@@ -24,9 +84,13 @@ mascarpone/
 ├── src/
 │   ├── agents.py                  # AI agent implementations
 │   ├── models.py                  # Card and game state models
-│   ├── mascarpone.py             # Core game logic
-│   └── main.py                   # Entry point
-└── README.md                     # This file
+│   ├── mascarpone.py              # Core game logic
+│   ├── main.py                    # Entry point (simulation)
+│   ├── web_server.py              # Web server for online play
+│   ├── web_game.py                # Web game logic
+│   ├── templates/                 # HTML templates
+│   └── static/                    # CSS and JavaScript
+└── README.md                      # This file
 ```
 
 

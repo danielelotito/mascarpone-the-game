@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mascarpone - Room {{ room_id }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>🎴 Mascarpone</h1>
+            <div class="room-info">
+                Room: <span id="roomId">{{ room_id }}</span>
+                <button id="copyLink" class="btn-small">Copy Link</button>
+            </div>
+        </header>
+        
+        <main class="game-main">
+            <!-- Waiting/Lobby -->
+            <div id="lobbySection" class="section">
+                <h2>Waiting for Players...</h2>
+                <div id="playerList" class="player-list"></div>
+                <button id="startGameBtn" class="btn btn-primary" disabled>Start Game (need 2+ players)</button>
+            </div>
+            
+            <!-- Game Status -->
+            <div id="gameStatus" class="section hidden">
+                <div class="status-bar">
+                    <span>Round: <strong id="roundNum">1</strong></span>
+                    <span>Cards: <strong id="cardsPerRound">5</strong></span>
+                    <span>Phase: <strong id="gamePhase">-</strong></span>
+                </div>
+            </div>
+            
+            <!-- Players Display -->
+            <div id="playersSection" class="section hidden">
+                <h3>Players</h3>
+                <div id="gamePlayers" class="players-grid"></div>
+            </div>
+            
+            <!-- Current Pile -->
+            <div id="pileSection" class="section hidden">
+                <h3>Current Trick</h3>
+                <div id="cardPile" class="card-pile"></div>
+            </div>
+            
+            <!-- Your Hand -->
+            <div id="handSection" class="section hidden">
+                <h3>Your Hand</h3>
+                <div id="yourHand" class="hand"></div>
+            </div>
+            
+            <!-- Declaration Input -->
+            <div id="declareSection" class="section hidden">
+                <h3>Declare Your Tricks</h3>
+                <p id="declareInfo"></p>
+                <div class="declare-controls">
+                    <input type="number" id="declareInput" min="0" value="0">
+                    <button id="declareBtn" class="btn btn-primary">Declare</button>
+                </div>
+            </div>
+            
+            <!-- Ace of Hearts Option -->
+            <div id="aceModal" class="modal hidden">
+                <div class="modal-content">
+                    <h3>Ace of Hearts</h3>
+                    <p>Play as highest or lowest card?</p>
+                    <button id="aceHigh" class="btn btn-primary">Highest</button>
+                    <button id="aceLow" class="btn btn-secondary">Lowest</button>
+                </div>
+            </div>
+            
+            <!-- Round Results -->
+            <div id="roundResultModal" class="modal hidden">
+                <div class="modal-content">
+                    <h3>Round Complete!</h3>
+                    <div id="roundResults"></div>
+                    <button id="nextRoundBtn" class="btn btn-primary">Next Round</button>
+                </div>
+            </div>
+            
+            <!-- Game Over -->
+            <div id="gameOverModal" class="modal hidden">
+                <div class="modal-content">
+                    <h2>🏆 Game Over!</h2>
+                    <p id="winnerText"></p>
+                    <a href="/" class="btn btn-primary">Play Again</a>
+                </div>
+            </div>
+            
+            <!-- Messages -->
+            <div id="messageArea" class="message-area"></div>
+        </main>
+    </div>
+    
+    <script src="/static/socket.io.min.js"></script>
+    <script>
+        const roomId = '{{ room_id }}';
+        const urlParams = new URLSearchParams(window.location.search);
+        const playerName = urlParams.get('name') || 'Player';
+        let myPlayerId = null;
+        let gameState = null;
+        let selectedCardIndex = null;
+        
+        const socket = io();
+        
+        // Elements
+        const lobbySection = document.getElementById('lobbySection');
+        const gameStatus = document.getElementById('gameStatus');
+        const playersSection = document.getElementById('playersSection');
+        const pileSection = document.getElementById('pileSection');
+        const handSection = document.getElementById('handSection');
+        const declareSection = document.getElementById('declareSection');
+        const messageArea = document.getElementById('messageArea');
+        
+        // Connect and join room
+        socket.on('connect', () => {
+            socket.emit('join_room', { room_id: roomId, player_name: playerName });
+        });
+        
+        socket.on('joined', (data) => {
+            myPlayerId = data.player_id;
+            showMessage(`Joined room ${roomId}`);
+        });
+        
+        socket.on('error', (data) => {
+            showMessage(data.message, 'error');
+        });
+        
+        socket.on('game_state', (state) => {
+            gameState = state;
+            updateUI();
+        });
+        
+        socket.on('trick_result', (data) => {
+            showMessage(`${data.winner_name} wins the trick!`);
+        });
+        
+        socket.on('round_result', (data) => {
+            showRoundResults(data);
+        });
+        
+        socket.on('game_over', (data) => {
+            showGameOver(data);
+        });
+        
+        function updateUI() {
+            if (!gameState) return;
+            
+            if (gameState.phase === 'waiting') {
+                showLobby();
+            } else {
+                showGame();
+            }
+        }
+        
+        function showLobby() {
+            lobbySection.classList.remove('hidden');
+            gameStatus.classList.add('hidden');
+            playersSection.classList.add('hidden');
+            pileSection.classList.add('hidden');
+            handSection.classList.add('hidden');
+            declareSection.classList.add('hidden');
+            
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = gameState.players.map(p => 
+                `<div class="player-item ${p.is_you ? 'you' : ''}">${p.name}${p.is_you ? ' (You)' : ''}</div>`
+            ).join('');
+            
+            const startBtn = document.getElementById('startGameBtn');
+            startBtn.disabled = gameState.players.length < 2;
+            startBtn.textContent = gameState.players.length < 2 
+                ? `Start Game (need ${2 - gameState.players.length} more)`
+                : 'Start Game';
+        }
+        
+        function showGame() {
+            lobbySection.classList.add('hidden');
+            gameStatus.classList.remove('hidden');
+            playersSection.classList.remove('hidden');
+            pileSection.classList.remove('hidden');
+            handSection.classList.remove('hidden');
+            
+            // Update status
+            document.getElementById('roundNum').textContent = gameState.current_round;
+            document.getElementById('cardsPerRound').textContent = gameState.cards_per_round;
+            document.getElementById('gamePhase').textContent = gameState.phase;
+            
+            // Update players
+            updatePlayersDisplay();
+            
+            // Update pile
+            updatePile();
+            
+            // Update hand
+            updateHand();
+            
+            // Show declaration UI if needed
+            if (gameState.phase === 'declaring' && gameState.is_your_turn) {
+                showDeclareUI();
+            } else {
+                declareSection.classList.add('hidden');
+            }
+        }
+        
+        function updatePlayersDisplay() {
+            const container = document.getElementById('gamePlayers');
+            container.innerHTML = gameState.players
+                .filter(p => !p.is_eliminated)
+                .map(p => {
+                    const isActive = gameState.phase === 'playing' 
+                        ? p.id === gameState.current_player 
+                        : p.id === gameState.current_declarer;
+                    return `
+                        <div class="player-card ${p.is_you ? 'you' : ''} ${isActive ? 'active' : ''} ${p.is_eliminated ? 'eliminated' : ''}">
+                            <div class="player-name">${p.name}${p.is_you ? ' (You)' : ''}</div>
+                            <div class="player-stats">
+                                Cards: ${p.card_count} | 
+                                Declared: ${p.declared_tricks !== null ? p.declared_tricks : '-'} |
+                                Won: ${p.tricks_won}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+        }
+        
+        function updatePile() {
+            const pile = document.getElementById('cardPile');
+            if (gameState.current_pile.length === 0) {
+                pile.innerHTML = '<div class="empty-pile">No cards played yet</div>';
+            } else {
+                pile.innerHTML = gameState.current_pile.map(([pid, card]) => {
+                    const player = gameState.players.find(p => p.id === pid);
+                    const isRed = isRedSuit(card);
+                    return `<div class="pile-card"><span class="card ${isRed ? 'red-suit' : ''}">${formatCard(card)}</span><span class="played-by">${player?.name || 'Unknown'}</span></div>`;
+                }).join('');
+            }
+        }
+        
+        function updateHand() {
+            const hand = document.getElementById('yourHand');
+            if (gameState.is_eliminated) {
+                hand.innerHTML = '<div class="eliminated-msg">You have been eliminated (Mascarpone!)</div>';
+                return;
+            }
+            
+            const canPlay = gameState.phase === 'playing' && gameState.is_your_turn;
+            hand.innerHTML = gameState.your_cards.map((card, idx) => {
+                const isRed = isRedSuit(card);
+                return `<button class="card-btn ${canPlay ? 'playable' : ''} ${isRed ? 'red-suit' : ''}" 
+                         data-index="${idx}" 
+                         ${!canPlay ? 'disabled' : ''}>${formatCard(card)}</button>`;
+            }).join('');
+            
+            // Add click handlers
+            hand.querySelectorAll('.card-btn.playable').forEach(btn => {
+                btn.addEventListener('click', () => playCard(parseInt(btn.dataset.index)));
+            });
+        }
+        
+        function isRedSuit(cardStr) {
+            // Check if the card is a red suit (Hearts or Diamonds)
+            const suit = cardStr.slice(-1);
+            return suit === 'H' || suit === 'D';
+        }
+        
+        function formatCard(cardStr) {
+            // Convert card string (e.g., "AH", "10S") to display format
+            const suitMap = {'H': '♥', 'D': '♦', 'C': '♣', 'S': '♠'};
+            const suit = cardStr.slice(-1);
+            const value = cardStr.slice(0, -1);
+            return value + (suitMap[suit] || suit);
+        }
+        
+        function showDeclareUI() {
+            declareSection.classList.remove('hidden');
+            const input = document.getElementById('declareInput');
+            input.max = gameState.cards_per_round;
+            input.value = 0;
+            
+            const info = document.getElementById('declareInfo');
+            if (gameState.is_last_declarer) {
+                const forbidden = gameState.cards_per_round - gameState.total_declared;
+                info.textContent = `You are last to declare. You cannot declare ${forbidden} (total cannot equal ${gameState.cards_per_round}).`;
+            } else {
+                info.textContent = `Total declared so far: ${gameState.total_declared}`;
+            }
+        }
+        
+        function playCard(index) {
+            const card = gameState.your_cards[index];
+            // Check if it's Ace of Hearts
+            if (card === 'AH') {
+                selectedCardIndex = index;
+                document.getElementById('aceModal').classList.remove('hidden');
+            } else {
+                socket.emit('play_card', { room_id: roomId, card_index: index });
+            }
+        }
+        
+        function showRoundResults(data) {
+            const modal = document.getElementById('roundResultModal');
+            const results = document.getElementById('roundResults');
+            results.innerHTML = data.round_summary.map(r => `
+                <div class="result-row ${r.mascarpone ? 'mascarpone' : 'safe'}">
+                    <span>${r.name}</span>
+                    <span>Declared: ${r.declared} | Won: ${r.won}</span>
+                    <span>${r.mascarpone ? '❌ MASCARPONE!' : '✅ Safe'}</span>
+                </div>
+            `).join('');
+            modal.classList.remove('hidden');
+        }
+        
+        function showGameOver(data) {
+            const modal = document.getElementById('gameOverModal');
+            const text = document.getElementById('winnerText');
+            if (data.winner) {
+                text.textContent = `${data.winner.name} wins the game!`;
+            } else {
+                text.textContent = 'No winner - everyone was eliminated!';
+            }
+            modal.classList.remove('hidden');
+        }
+        
+        function showMessage(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = msg;
+            messageArea.appendChild(div);
+            setTimeout(() => div.remove(), 5000);
+        }
+        
+        // Event handlers
+        document.getElementById('startGameBtn').addEventListener('click', () => {
+            socket.emit('start_game', { room_id: roomId });
+        });
+        
+        document.getElementById('declareBtn').addEventListener('click', () => {
+            const tricks = parseInt(document.getElementById('declareInput').value);
+            socket.emit('declare_tricks', { room_id: roomId, tricks: tricks });
+        });
+        
+        document.getElementById('aceHigh').addEventListener('click', () => {
+            document.getElementById('aceModal').classList.add('hidden');
+            socket.emit('play_card', { room_id: roomId, card_index: selectedCardIndex, ace_low: false });
+        });
+        
+        document.getElementById('aceLow').addEventListener('click', () => {
+            document.getElementById('aceModal').classList.add('hidden');
+            socket.emit('play_card', { room_id: roomId, card_index: selectedCardIndex, ace_low: true });
+        });
+        
+        document.getElementById('nextRoundBtn').addEventListener('click', () => {
+            document.getElementById('roundResultModal').classList.add('hidden');
+            socket.emit('next_round', { room_id: roomId });
+        });
+        
+        document.getElementById('copyLink').addEventListener('click', () => {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                showMessage('Link copied to clipboard!');
+            });
+        });
+    </script>
+</body>
+</html>
