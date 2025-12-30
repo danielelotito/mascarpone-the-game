@@ -299,6 +299,15 @@ h1 {
     transition: all 0.2s;
 }
 
+/* Red suits (hearts and diamonds) */
+.card-btn.red-suit {
+    color: #c0392b;
+}
+
+.card.red-suit {
+    color: #c0392b;
+}
+
 .card-btn:disabled {
     opacity: 0.7;
     cursor: not-allowed;

@@ -232,7 +232,8 @@
             } else {
                 pile.innerHTML = gameState.current_pile.map(([pid, card]) => {
                     const player = gameState.players.find(p => p.id === pid);
-                    return `<div class="pile-card"><span class="card">${formatCard(card)}</span><span class="played-by">${player?.name || 'Unknown'}</span></div>`;
+                    const isRed = isRedSuit(card);
+                    return `<div class="pile-card"><span class="card ${isRed ? 'red-suit' : ''}">${formatCard(card)}</span><span class="played-by">${player?.name || 'Unknown'}</span></div>`;
                 }).join('');
             }
         }
@@ -245,16 +246,23 @@
             }
             
             const canPlay = gameState.phase === 'playing' && gameState.is_your_turn;
-            hand.innerHTML = gameState.your_cards.map((card, idx) => 
-                `<button class="card-btn ${canPlay ? 'playable' : ''}" 
+            hand.innerHTML = gameState.your_cards.map((card, idx) => {
+                const isRed = isRedSuit(card);
+                return `<button class="card-btn ${canPlay ? 'playable' : ''} ${isRed ? 'red-suit' : ''}" 
                          data-index="${idx}" 
-                         ${!canPlay ? 'disabled' : ''}>${formatCard(card)}</button>`
-            ).join('');
+                         ${!canPlay ? 'disabled' : ''}>${formatCard(card)}</button>`;
+            }).join('');
             
             // Add click handlers
             hand.querySelectorAll('.card-btn.playable').forEach(btn => {
                 btn.addEventListener('click', () => playCard(parseInt(btn.dataset.index)));
             });
+        }
+        
+        function isRedSuit(cardStr) {
+            // Check if the card is a red suit (Hearts or Diamonds)
+            const suit = cardStr.slice(-1);
+            return suit === 'H' || suit === 'D';
         }
         
         function formatCard(cardStr) {
